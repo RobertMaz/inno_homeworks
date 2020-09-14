@@ -3,11 +3,9 @@ import java.util.Objects;
 
 /**
  * Class implementation hashtable, how HashMap.
- *
+ * Implements Map.
  */
-public class MyMap {
-
-    /* ---------------- Fields -------------- */
+public class MyMap implements Map {
 
     /**
      * The default initial capacity - MUST be a power of two.
@@ -42,8 +40,8 @@ public class MyMap {
 
     /**
      * Constructor
-     * @param capacity
-     * throws IllegalArgumentException, when capacity < 0
+     *
+     * @param capacity throws IllegalArgumentException, when capacity < 0
      */
     public MyMap(int capacity) {
         if (capacity < 0) {
@@ -57,14 +55,14 @@ public class MyMap {
         this(DEFAULT_INITIAL_CAPACITY);
     }
 
-    /* ---------------- Public operations -------------- */
-
     /**
      * Method is put new element in table. If element by hashcode in table is not null,
      * then use putNodeByEqualsHash(newNode, bucket).
+     *
      * @param key
      * @param value
      */
+    @Override
     public void put(Object key, Object value) {
         if (key == null) {
             throw new IllegalArgumentException("Key can't be null");
@@ -81,17 +79,18 @@ public class MyMap {
             table[hashCode] = newNode;
             objectCount++;
             bucketsCount++;
-
         } else {
             putNodeByEqualsHash(newNode, table[hashCode]);
         }
     }
 
     /**
-     * Method return Value by Key. If not find key, then return null.
+     * Method return Value by Key. If not find key, throw IllegalArgumentException.
+     *
      * @param key
      * @return Value if find, else null
      */
+    @Override
     public Object getValue(Object key) {
         int hash = Math.abs(new Node(key, null).hashCode() % capacity);
         Node current = table[hash];
@@ -102,41 +101,43 @@ public class MyMap {
                 current = current.getNext();
             }
         }
-        return null;
+        throw new IllegalArgumentException("Not find object with key=" + key);
     }
 
     /**
      * Method delete object in table by key, and return old Value.
-     * If not find object, return null.
+     * If not find object, throw new IllegalArgumentException.
+     *
      * @param key
-     * @return oldValue by Key if key find, else null.
+     * @return oldValue by Key if key find, else throw new IllegalArgumentException.
      */
+    @Override
     public Object delete(Object key) {
         Node deleteNode = new Node(key, null);
         int currentHash = Math.abs(deleteNode.hashCode() % capacity);
         Object oldValue = null;
 
         if (table[currentHash] == null) {
-            return null;
-        } else {
-            Node head = table[currentHash];
+            throw new IllegalArgumentException("Not find object with key=" + key);
+        }
 
-            if (head.getNext() == null && head.getKey().equals(deleteNode.getKey())) {
-                oldValue = table[currentHash].getValue();
-                table[currentHash] = null;
-                objectCount--;
-            } else {
-                while (head.getNext() != null) {
-                    if (head.getNext().getKey().equals(deleteNode.getKey())) {
-                        oldValue = head.getNext().getValue();
-                        head.setNext(head.getNext().getNext());
-                        objectCount--;
-                        break;
-                    }
-                    head = head.getNext();
+        Node head = table[currentHash];
+        if (head.getNext() == null && head.getKey().equals(deleteNode.getKey())) {
+            oldValue = table[currentHash].getValue();
+            table[currentHash] = null;
+            objectCount--;
+        } else {
+            while (head.getNext() != null) {
+                if (head.getNext().getKey().equals(deleteNode.getKey())) {
+                    oldValue = head.getNext().getValue();
+                    head.setNext(head.getNext().getNext());
+                    objectCount--;
+                    break;
                 }
+                head = head.getNext();
             }
         }
+
         return oldValue;
     }
 
@@ -144,10 +145,12 @@ public class MyMap {
      * Method update value element by key.
      * If update successful, then return oldValue.
      * Else key not find, then throws IllegalArgumentException
+     *
      * @param key
      * @param value
      * @return oldValue if update success, else throw IllegalArgumentException.
      */
+    @Override
     public Object update(Object key, Object value) {
         Node node = new Node(key, value);
         int hash = Math.abs(node.hashCode() % capacity);
@@ -155,9 +158,8 @@ public class MyMap {
 
         if (oldValue == null) {
             throw new IllegalArgumentException("Not find element with key=" + key);
-        } else {
-            return oldValue;
         }
+        return oldValue;
     }
 
     @Override
@@ -175,28 +177,29 @@ public class MyMap {
     }
 
     /**
-     *
      * @return count Objects in table
      */
+    @Override
     public int size() {
         return objectCount;
     }
 
     /**
      * Method return true if key is was find. else false.
+     *
      * @param key
      * @return
      */
+    @Override
     public boolean containsKey(Object key) {
         return getValue(key) != null;
     }
 
-    /* ---------------- Private operations -------------- */
-
     /**
      * Method put new Element in table, if hashcode is equals.
      * If table have key yet, then value by key is rewrite.     *
-     * @param newNode is new element for table
+     *
+     * @param newNode      is new element for table
      * @param bucketForPut bucket fot linkedList
      * @return oldValue if Value was rewrite, else null
      */
@@ -220,9 +223,11 @@ public class MyMap {
         return oldValue;
     }
 
-    /**Method for check capacity.
+    /**
+     * Method for check capacity.
      * If bucketCount more then capacity by 80 %,
      * return true, else return false.
+     *
      * @return
      */
     private boolean isFull() {
@@ -237,7 +242,7 @@ public class MyMap {
         objectCount = 0;
         capacity *= 2;
         Node[] oldTable = table;
-        if (capacity >= MAXIMUM_CAPACITY){
+        if (capacity >= MAXIMUM_CAPACITY) {
             throw new ArrayIndexOutOfBoundsException("Array is full");
         }
         table = new Node[capacity];
@@ -246,61 +251,6 @@ public class MyMap {
             if (node != null) {
                 put(node.getKey(), node.getValue());
             }
-        }
-    }
-
-    /**
-     * Inner class for Objects with key, and value.
-     */
-    private class Node {
-        private final Object key;
-        private Object value;
-        private Node next;
-
-        public Node getNext() {
-            return next;
-        }
-
-        public void setNext(Node next) {
-            this.next = next;
-        }
-
-        public void setValue(Object value) {
-            this.value = value;
-        }
-
-        public Node(Object key, Object value) {
-            this.key = key;
-            this.value = value;
-        }
-
-        public Object getKey() {
-            return key;
-        }
-
-        public Object getValue() {
-            return value;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            Node node = (Node) o;
-            return Objects.equals(key, node.key) &&
-                    Objects.equals(value, node.value);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(key);
-        }
-
-        @Override
-        public String toString() {
-            return "{key=" + key +
-                    ", value=" + value +
-                    '}';
         }
     }
 
