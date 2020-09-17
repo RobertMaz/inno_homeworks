@@ -4,7 +4,7 @@ import java.util.Objects;
  * Class implementation hashtable, how HashMap.
  * Implements Map.
  */
-public class MyMap implements Map{
+public class MyMap implements Map {
 
     /**
      * The default initial capacity - MUST be a power of two.
@@ -61,6 +61,7 @@ public class MyMap implements Map{
      * @param key
      * @param value
      */
+    @Override
     public void put(Object key, Object value) {
         if (key == null) {
             throw new IllegalArgumentException("Key can't be null");
@@ -88,6 +89,7 @@ public class MyMap implements Map{
      * @param key
      * @return Value if find, else null
      */
+    @Override
     public Object getValue(Object key) {
         int hash = Math.abs(new Node(key, null).hashCode() % capacity);
         Node current = table[hash];
@@ -108,7 +110,7 @@ public class MyMap implements Map{
      * @param key
      * @return oldValue by Key if key find, else throw new IllegalArgumentException.
      */
-
+    @Override
     public Object delete(Object key) {
         Node deleteNode = new Node(key, null);
         int currentHash = Math.abs(deleteNode.hashCode() % capacity);
@@ -147,6 +149,7 @@ public class MyMap implements Map{
      * @param value
      * @return oldValue if update success, else throw IllegalArgumentException.
      */
+    @Override
     public Object update(Object key, Object value) {
         Node node = new Node(key, value);
         int hash = Math.abs(node.hashCode() % capacity);
@@ -175,6 +178,7 @@ public class MyMap implements Map{
     /**
      * @return count Objects in table
      */
+    @Override
     public int size() {
         return objectCount;
     }
@@ -185,6 +189,7 @@ public class MyMap implements Map{
      * @param key
      * @return
      */
+    @Override
     public boolean containsKey(Object key) {
         return getValue(key) != null;
     }
@@ -225,6 +230,7 @@ public class MyMap implements Map{
      *
      * @return
      */
+
     private boolean isFull() {
         return bucketsCount > capacity * 0.8;
     }
@@ -237,7 +243,7 @@ public class MyMap implements Map{
         objectCount = 0;
         capacity *= 2;
         Node[] oldTable = table;
-        if (capacity >= MAXIMUM_CAPACITY -1) {
+        if (capacity >= MAXIMUM_CAPACITY - 1) {
             throw new ArrayIndexOutOfBoundsException("Array is full");
         }
         table = new Node[capacity];
