@@ -11,6 +11,7 @@ import java.io.IOException;
  */
 public class GeneratedPeople {
     private String[] names;
+    private final String FILE_NAME;
 
     /**
      * Method return array people,
@@ -36,7 +37,8 @@ public class GeneratedPeople {
      * load names from file
      * @throws IOException
      */
-    public GeneratedPeople() throws IOException {
+    public GeneratedPeople(String fileName) throws IOException {
+        this.FILE_NAME = fileName;
         loadNames();
     }
 
@@ -54,7 +56,7 @@ public class GeneratedPeople {
     }
 
     private void loadNames() throws IOException {
-        try (BufferedReader reader = new BufferedReader(new FileReader("homework3/src/main/resources/names.txt"))) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(FILE_NAME))) {
             names = reader.readLine().split(", ");
         }
     }
