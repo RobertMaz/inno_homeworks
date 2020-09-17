@@ -4,7 +4,7 @@ import java.util.Objects;
  * Class implementation hashtable, how HashMap.
  * Implements Map.
  */
-public class MyMap {
+public class MyMap implements Map{
 
     /**
      * The default initial capacity - MUST be a power of two.
