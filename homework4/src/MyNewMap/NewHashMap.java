@@ -379,7 +379,8 @@ public class NewHashMap<K, V> implements Map<K, V> {
             current = next = null;
             index = 0;
             if (t != null && size > 0) {
-                while (index < t.length && (next = t[index++]) == null) {
+                while (index < t.length && next == null) {
+                    next = t[index++];
                 }
             }
         }
@@ -393,9 +394,12 @@ public class NewHashMap<K, V> implements Map<K, V> {
             Node<K, V> e = next;
             if (e == null)
                 throw new NoSuchElementException();
-
-            if ((next = (current = e).getNext()) == null && (t = table) != null) {
-                while (index < t.length && (next = t[index++]) == null) {
+            current = e;
+            next = current.getNext();
+            t = table;
+            if (next == null && t != null) {
+                while (index < t.length && next == null) {
+                    next = t[index++];
                 }
             }
             return e;

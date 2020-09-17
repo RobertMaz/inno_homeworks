@@ -29,13 +29,15 @@ public class MyMapTest {
     @Test
     public void checkDeleteObject(){
         myMap = new MyMap();
-        for (int i = 0; i < 20; i++) {
+        for (int i = 0; i < 100; i++) {
             myMap.put(i, i);
         }
         myMap.delete(15);
         myMap.delete(12);
-        myMap.delete(13);
+        myMap.delete(55);
         myMap.delete(16);
-        Assert.assertEquals(16, myMap.size());
+        myMap.delete(85);
+        Assert.assertEquals(95, myMap.size());
+        System.out.println(myMap);
     }
 }

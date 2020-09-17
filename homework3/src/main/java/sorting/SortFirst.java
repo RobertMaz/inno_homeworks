@@ -30,10 +30,8 @@ public class SortFirst implements SortPerson {
         System.arraycopy(people, 0, manPeople, 0, manCount);
         System.arraycopy(people, manCount, womanPeople, 0, womanPeople.length);
 
-        Arrays.sort(manPeople, this::sortByAgeAndName
-        );
-        Arrays.sort(womanPeople, this::sortByAgeAndName
-        );
+        Arrays.sort(manPeople, this::sortByAgeAndName);
+        Arrays.sort(womanPeople, this::sortByAgeAndName);
 
         System.arraycopy(manPeople, 0, people, 0, manPeople.length);
         System.arraycopy(womanPeople, 0, people, manPeople.length, womanPeople.length);

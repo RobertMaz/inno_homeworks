@@ -1,6 +1,5 @@
 import java.util.Objects;
 
-
 /**
  * Class implementation hashtable, how HashMap.
  * Implements Map.
@@ -128,9 +127,9 @@ public class MyMap implements Map {
             objectCount--;
         } else {
             while (head.getNext() != null) {
-                if (head.getNext().getKey().equals(deleteNode.getKey())) {
-                    oldValue = head.getNext().getValue();
-                    head.setNext(head.getNext().getNext());
+                if (head.getKey().equals(deleteNode.getKey())) {
+                    oldValue = head.getValue();
+                    head.setCurrent(head.getNext());
                     objectCount--;
                     break;
                 }
@@ -169,7 +168,7 @@ public class MyMap implements Map {
         for (Node node : table) {
             if (node != null) {
                 sb.append(node);
-                sb.append(", ");
+                sb.append(", ").append("\n");
             }
         }
         sb.delete(sb.length() - 2, sb.length());
@@ -213,7 +212,8 @@ public class MyMap implements Map {
                 oldValue = head.getValue();
                 head.setValue(newNode.getValue());
                 break;
-            } else if (head.getNext() == null) {
+            }
+            if (head.getNext() == null) {
                 head.setNext(newNode);
                 objectCount++;
                 break;
@@ -230,6 +230,7 @@ public class MyMap implements Map {
      *
      * @return
      */
+
     private boolean isFull() {
         return bucketsCount > capacity * 0.8;
     }
@@ -242,14 +243,15 @@ public class MyMap implements Map {
         objectCount = 0;
         capacity *= 2;
         Node[] oldTable = table;
-        if (capacity >= MAXIMUM_CAPACITY) {
+        if (capacity >= MAXIMUM_CAPACITY - 1) {
             throw new ArrayIndexOutOfBoundsException("Array is full");
         }
         table = new Node[capacity];
 
         for (Node node : oldTable) {
-            if (node != null) {
+            while (node != null) {
                 put(node.getKey(), node.getValue());
+                node = node.next;
             }
         }
     }
