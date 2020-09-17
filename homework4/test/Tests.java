@@ -11,7 +11,7 @@ import static org.junit.Assert.assertTrue;
 
 
 public class Tests {
-    public static Map<String, Integer> newMap = new NewHashMap<>();
+    public static NewHashMap<String, Integer> newMap = new NewHashMap<>();
     public static Map<String, Integer> originalMap = new HashMap<>();
 
     @Before
@@ -76,5 +76,22 @@ public class Tests {
     public void notFindKey(){
         int number = 100;
         newMap.get(number);
+    }
+
+    @Test
+    public void putAllTest(){
+        NewHashMap<String, Integer> newSecond = new NewHashMap<>();
+        for (int i = 20000; i <= 250000; i++) {
+            newSecond.put(String.valueOf(i), i);
+        }
+        Map<String, Integer> hashmap = new HashMap<>();
+        for (int i = 250000; i >= 20000; i--) {
+            hashmap.put(String.valueOf(i), i);
+        }
+        originalMap.putAll(hashmap);
+        newMap.putAll(newSecond);
+        System.out.println(newMap.size() + " " + originalMap.size());
+        assertTrue(newMap.equals(originalMap));
+
     }
 }
