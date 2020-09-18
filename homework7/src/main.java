@@ -1,22 +1,41 @@
-public class main {
-    public static void main(String[] args) {
-        Game game = new Game('_', 'X', 5);
-        game.fill(new int[]{1,1}, new int[]{2,2}, new int[]{3,2},new int[]{1,3}, new int[]{2, 3});
-        System.out.println(game.toString());
-        for (int i = 0; i < 5; i++) {
-            if (step(game)){
-                System.out.println(game.toString());
-                break;
-            }
-        }
-    }
+import java.io.*;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.StampedLock;
 
-    private static boolean step(Game game) {
-        for (int i = 0; i < 5 ; i--) {
-            for (int j = 0; j < 5; j--) {
-                return game.check(i, j);
-            }
+public class main {
+    private final static char LIVE = '☻';
+    private final static char DEAD = ' ';
+
+    public static void main(String[] args) throws InterruptedException {
+
+
+        Game game = new Game(LIVE, DEAD);
+        System.out.println(game.toString());
+
+        while (game.isPlay()) {
+            game.nextStep();
+            Thread.sleep(150);
+            System.out.println(game.toString());
         }
-        return false;
+
+        System.out.println("The end game");
+
+        try {
+            game.writeToFileProperties("game_end.properties");
+        } catch (FileNotFoundException e) {
+            System.out.println("Write file not found");
+        }
+
+//            Thread play = new Thread(game);
+//            while (game.isPlay()) {
+//                play.start();
+//                Thread.sleep(150);
+//                play.join();
+//                System.out.println(game.toString());
+//            }
+
+
+
     }
 }
+
