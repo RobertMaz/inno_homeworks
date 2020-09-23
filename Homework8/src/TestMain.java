@@ -3,7 +3,7 @@ import java.util.*;
 public class TestMain {
     public static void main(String[] args) {
         final User user = new User(25, "User", 'm');
-        Reflect ref = new Reflect();
+        Cleaner ref = new Reflect();
         Set<String> fieldsToCleanUp = new HashSet<String>() {{
 //            add("age");
             add("name");

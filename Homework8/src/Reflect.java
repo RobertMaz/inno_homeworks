@@ -2,7 +2,7 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.util.*;
 
-public class Reflect {
+public class Reflect implements Cleaner{
 
     /**
      * Method first save all fields from fieldsToOutput,
@@ -16,6 +16,7 @@ public class Reflect {
      * @return
      * @throws IllegalAccessException - if fields from fieldsToCleanUp or fieldsToOutput not found in object class.
      */
+    @Override
     public List<String> cleanUp(Object object, Set<String> fieldsToCleanup, Set<String> fieldsToOutput) throws IllegalAccessException {
         List<String> values;
         if (object instanceof Map) {
