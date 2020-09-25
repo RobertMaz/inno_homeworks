@@ -9,8 +9,8 @@ import java.util.Objects;
 public class Server implements ServerHandler {
     final private String address;
     final private int port;
-    final private String expectedRequest = "GET";
-    final private String errorText = "\nError 404. File not found.";
+    final private static String EXPECTED_REQUEST = "GET";
+    final private static String ERROR_TEXT = "\nError 404. File not found.";
 
     /**
      * Constructor for Server. Need enter ipAddress and Port
@@ -34,12 +34,12 @@ public class Server implements ServerHandler {
         HttpContext context = server.createContext("/");
         context.setHandler(exchange -> {
             String currentRequest = exchange.getRequestMethod();
-            if (expectedRequest.equals(currentRequest)) {
+            if (EXPECTED_REQUEST.equals(currentRequest)) {
                 printFiles(exchange, "./");
             } else {
                 System.out.println("Exception");
-                exchange.sendResponseHeaders(404, errorText.getBytes().length);
-                exchange.getResponseBody().write(errorText.getBytes());
+                exchange.sendResponseHeaders(404, ERROR_TEXT.getBytes().length);
+                exchange.getResponseBody().write(ERROR_TEXT.getBytes());
             }
         });
 
