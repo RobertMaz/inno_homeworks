@@ -1,18 +1,67 @@
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
-public class Game implements Runnable {
-    private final char[][] FIELD;
+public class Game {
+    private static final char INCREASE_LIVE = 'o';//will born next step
+    private static final char INCREASE_DEAD = 't';//will dead next step
+
     private final char ALIVE;
     private final char DEAD;
-    private final char INCREASE_LIVE = 'o';//will born next step
-    private final char INCREASE_DEAD = 't';//will dead next step
-    private int counter;
-    private int stepCounter;
-    private int maxStepCount;
     private int SIZE;
+    private final char[][] FIELD;
     private List<Integer[]> startValues;
-    private int isMoveStepCount;
+
+    /**
+     * Max step count which user enter, in start game.
+     */
+    private int maxStepCount;
+
+    /**
+     * Step counter for stop game which max step equals stepCounter.
+     */
+    private int stepCounter;
+
+    /**
+     * Counter which check updated FIELD or no
+     */
+    private final AtomicInteger isMoveStepCount = new AtomicInteger();
+
+    /**
+     * Thread count in start game.
+     */
+    private int threadCount = 2;
+
+    /**
+     * First average time for up thread count.
+     */
+    private int previousAvgTime = 10000;
+
+    /**
+     * Current average time.
+     */
+    private int avgTime;
+
+    /**
+     * current time sum for average time.
+     */
+    private int timeSum;
+
+    /**
+     * Current step count with equals thread count,
+     * for current average time
+     */
+    private int countForTime;
+
+    /**
+     * Counter for up or low thread count.
+     * If this equals 2, then up thread count, else if -1 then will lower.
+     */
+    private int stepCountForUpdate;
+
 
     /**
      * Constructor by default, accept two chars for game.
@@ -34,30 +83,102 @@ public class Game implements Runnable {
      * @return
      */
     public boolean isPlay() {
-        return stepCounter != maxStepCount && isMoveStepCount >= 0;
+        return stepCounter != maxStepCount && isMoveStepCount.get() >= 0;
     }
 
     /**
-     * One step in game. Check and fill all cell in these loops.
+     * One step in the game. We check and fill in all the cells of these loops.
+     * The game starts with two threads. After calculating the average time,
+     * if the current average time is less than two steps in a row,
+     * then the number of threads increases, otherwise,
+     * if the current average value is more than two steps in a row, then the number of threads decreases.
      */
-    public void nextStep() {
-        isMoveStepCount = -1;
-        for (int i = 0; i < FIELD.length; i++) {
+    public void nextStep() throws InterruptedException {
+        stepCounter++;
+        isMoveStepCount.set(-1);
+
+        long beforeTime = System.currentTimeMillis();
+
+        ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
+        for (int i = 0; i < threadCount; i++) {
+            int finalI = i;
+            executorService.execute(() -> {
+                nextForThread((FIELD.length / threadCount) * finalI, (FIELD.length / threadCount) * (finalI + 1));
+            });
+        }
+
+        executorService.shutdown();
+        executorService.awaitTermination(10, TimeUnit.MINUTES);
+
+        long afterTime = System.currentTimeMillis();
+        long currentTime = afterTime - beforeTime;
+        fillWithLive();
+
+        System.out.println("Thread count: " + threadCount);
+        System.out.println("Current time: " + currentTime);
+
+        countForTime++;
+        timeSum += currentTime;
+        avgTime = timeSum / countForTime;
+
+        if (avgTime <= previousAvgTime) {
+            stepCountForUpdate++;
+        } else {
+            stepCountForUpdate--;
+        }
+
+        if (stepCountForUpdate == 2) {
+            threadCountUp();
+            stepCountForUpdate = 0;
+
+        } else if (stepCountForUpdate == -1){
+            threadCountDown();
+            stepCountForUpdate = 0;
+        }
+    }
+
+    /**
+     * Thread count down.
+     */
+    private void threadCountDown() {
+        for (int i = threadCount - 1; i > 0; i--) {
+            if (FIELD.length % i == 0) {
+                threadCount = i;
+                break;
+            }
+        }
+        previousAvgTime = avgTime;
+        timeSum = 0;
+        countForTime = 0;
+    }
+
+
+    /**
+     * Thread count up.
+     */
+    private void threadCountUp() {
+        for (int i = threadCount + 1; i < FIELD.length; i++) {
+            if (FIELD.length % i == 0) {
+                threadCount = i;
+                break;
+            }
+        }
+        previousAvgTime = avgTime;
+        timeSum = 0;
+        countForTime = 0;
+    }
+
+    /**
+     * Next step.
+     * @param startPosition for thread
+     * @param endPosition for thread
+     */
+    private void nextForThread(int startPosition, int endPosition) {
+        for (int i = startPosition; i < endPosition; i++) {
             for (int j = 0; j < FIELD.length; j++) {
                 checkCurrentCell(i, j);
             }
         }
-        stepCounter++;
-    }
-
-    /**
-     * For multithreading. I don't know how it do, and why.
-     * I thought, step start in some thread, by main thread sleep,
-     * but thread not start repeat in loop.
-     */
-    @Override
-    public void run() {
-        nextStep();
     }
 
     /**
@@ -66,7 +187,6 @@ public class Game implements Runnable {
      * @return
      */
     public String toString() {
-        fillWithLive();
         StringBuilder sb = new StringBuilder();
         for (char[] chars : FIELD) {
             for (int i = 0; i < FIELD.length; i++) {
@@ -74,7 +194,7 @@ public class Game implements Runnable {
             }
             sb.append("\n");
             for (int f = 0; f < FIELD.length; f++) {
-                sb.append(chars[f] == INCREASE_LIVE ? ALIVE : chars[f]).append(" ").append("|").append(" ");
+                sb.append(chars[f]).append(" ").append("|").append(" ");
             }
             sb.append("\n");
         }
@@ -83,6 +203,7 @@ public class Game implements Runnable {
 
     /**
      * Write to file end parameters game.
+     *
      * @param fileName
      * @throws FileNotFoundException
      */
@@ -90,7 +211,7 @@ public class Game implements Runnable {
         try (PrintWriter printWriter = new PrintWriter(fileName)) {
             Properties properties = new Properties();
             int x = 1;
-            int y = 2;
+            int y = 1;
             for (int i = 0; i < FIELD.length; i++) {
                 for (int j = 0; j < FIELD.length; j++) {
                     if (FIELD[i][j] == ALIVE) {
@@ -122,7 +243,7 @@ public class Game implements Runnable {
                     readFileWithProperties(file);
                     break;
                 } catch (IOException e) {
-                    continue;
+
                 }
             }
             while (!file.isFile() && !fileName.endsWith(".properties"));
@@ -187,7 +308,6 @@ public class Game implements Runnable {
                 }
             }
         }
-        counter = 0;
     }
 
     /**
@@ -204,10 +324,6 @@ public class Game implements Runnable {
      */
     private void checkCurrentCell(int x, int y) {
         int positive = 0;
-
-        if (counter == FIELD.length * FIELD.length) {
-            fillWithLive();
-        }
 
         if (isAccept(x + 1, y + 1)
                 && (FIELD[x + 1][y + 1] == ALIVE || FIELD[x + 1][y + 1] == INCREASE_DEAD)) {
@@ -246,18 +362,18 @@ public class Game implements Runnable {
                 && (FIELD[x][y - 1] == ALIVE || FIELD[x][y - 1] == INCREASE_DEAD)) {
             positive++;
         }
-        counter++;
 
         if (positive == 3 && FIELD[x][y] == DEAD && isAccept(x, y)) {
             FIELD[x][y] = INCREASE_LIVE;
-            isMoveStepCount++;
+            isMoveStepCount.getAndIncrement();
             return;
         }
 
         if ((positive < 2 || positive > 3) && FIELD[x][y] == ALIVE && isAccept(x, y)) {
             FIELD[x][y] = INCREASE_DEAD;
-            isMoveStepCount++;
+            isMoveStepCount.getAndIncrement();
         }
+
 
     }
 

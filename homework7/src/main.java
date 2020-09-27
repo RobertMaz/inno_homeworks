@@ -1,4 +1,6 @@
 import java.io.*;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.StampedLock;
 
@@ -8,14 +10,12 @@ public class main {
 
     public static void main(String[] args) throws InterruptedException {
 
-
         Game game = new Game(LIVE, DEAD);
-        System.out.println(game.toString());
 
         while (game.isPlay()) {
             game.nextStep();
-            Thread.sleep(150);
-            System.out.println(game.toString());
+//            Thread.sleep(150);
+//            System.out.println(game.toString());
         }
 
         System.out.println("The end game");
@@ -25,17 +25,6 @@ public class main {
         } catch (FileNotFoundException e) {
             System.out.println("Write file not found");
         }
-
-//            Thread play = new Thread(game);
-//            while (game.isPlay()) {
-//                play.start();
-//                Thread.sleep(150);
-//                play.join();
-//                System.out.println(game.toString());
-//            }
-
-
-
     }
 }
 
