@@ -58,7 +58,7 @@ public class Game {
 
     /**
      * Counter for up or low thread count.
-     * If this equals 2, then up thread count, else if -1 then will lower.
+     * If this equals 2, then up thread count, else if -2 then will lower.
      */
     private int stepCountForUpdate;
 
@@ -131,7 +131,7 @@ public class Game {
             threadCountUp();
             stepCountForUpdate = 0;
 
-        } else if (stepCountForUpdate == -1){
+        } else if (stepCountForUpdate == -2){
             threadCountDown();
             stepCountForUpdate = 0;
         }
