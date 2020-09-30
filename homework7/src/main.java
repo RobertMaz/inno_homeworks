@@ -10,12 +10,17 @@ public class main {
 
     public static void main(String[] args) throws InterruptedException {
 
-        Game game = new Game(LIVE, DEAD);
+        Game game = null;
+        try {
+            game = new Game(LIVE, DEAD, "data.properties");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         while (game.isPlay()) {
             game.nextStep();
 //            Thread.sleep(150);
-//            System.out.println(game.toString());
+            System.out.println(game.toString());
         }
 
         System.out.println("The end game");
