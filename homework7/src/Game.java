@@ -6,8 +6,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Game {
-    private static final char INCREASE_LIVE = 'o';//will born next step
-    private static final char INCREASE_DEAD = 't';//will dead next step
+    private static final char INCREASE_LIVE = 'o';
+    private static final char INCREASE_DEAD = 't';
 
     private final char ALIVE;
     private final char DEAD;
@@ -16,9 +16,10 @@ public class Game {
     private List<Integer[]> startValues;
 
     /**
-     * Max step count which user enter, in start game.
+     * Max step count which user set in start game,
+     * if not set, then game play to end.
      */
-    private int maxStepCount;
+    private int maxStepCount = Integer.MAX_VALUE;
 
     /**
      * Step counter for stop game which max step equals stepCounter.
@@ -69,10 +70,13 @@ public class Game {
      * @param live
      * @param dead
      */
-    public Game(char live, char dead) {
-        readSettings();
+    public Game(char live, char dead, String fileName) throws IOException {
         this.ALIVE = live;
         this.DEAD = dead;
+        if (!fileName.endsWith(".properties")) {
+            throw new IllegalArgumentException("File not properties");
+        }
+        readFileWithProperties(new File(fileName));
         this.FIELD = new char[SIZE][SIZE];
         fill(startValues);
     }
@@ -131,7 +135,7 @@ public class Game {
             threadCountUp();
             stepCountForUpdate = 0;
 
-        } else if (stepCountForUpdate == -2){
+        } else if (stepCountForUpdate == -2) {
             threadCountDown();
             stepCountForUpdate = 0;
         }
@@ -169,9 +173,11 @@ public class Game {
     }
 
     /**
-     * Next step.
+     * Next step for thread which go by his row.
+     * Different thread couldn't go by same row.
+     *
      * @param startPosition for thread
-     * @param endPosition for thread
+     * @param endPosition   for thread
      */
     private void nextForThread(int startPosition, int endPosition) {
         for (int i = startPosition; i < endPosition; i++) {
@@ -189,12 +195,8 @@ public class Game {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         for (char[] chars : FIELD) {
-            for (int i = 0; i < FIELD.length; i++) {
-                sb.append("____");
-            }
-            sb.append("\n");
-            for (int f = 0; f < FIELD.length; f++) {
-                sb.append(chars[f]).append(" ").append("|").append(" ");
+            for (char current : chars) {
+                sb.append(current);
             }
             sb.append("\n");
         }
@@ -221,45 +223,16 @@ public class Game {
                 }
             }
             properties.list(printWriter);
-
         }
     }
 
     /**
-     * Settings from start game.
-     * FileName - enter from console
-     * max step count - enter from console
+     * Set max step count
+     *
+     * @param maxStepCount
      */
-    private void readSettings() {
-        try (Scanner scanner = new Scanner(System.in)) {
-            File file;
-            String fileName;
-            do {
-                System.out.println("Please enter file name with properties");
-                fileName = scanner.nextLine().trim();
-                file = new File(fileName);
-
-                try {
-                    readFileWithProperties(file);
-                    break;
-                } catch (IOException e) {
-
-                }
-            }
-            while (!file.isFile() && !fileName.endsWith(".properties"));
-
-
-            System.out.println("Enter steps count");
-            while (true) {
-                try {
-                    maxStepCount = scanner.nextInt();
-                    break;
-                } catch (InputMismatchException e) {
-                    scanner.nextLine();
-                    System.out.println("Entered illegal argument, please try again");
-                }
-            }
-        }
+    public void setMaxStepCount(int maxStepCount) {
+        this.maxStepCount = maxStepCount;
     }
 
     /**
@@ -281,7 +254,7 @@ public class Game {
     }
 
     /**
-     * Fill array given parameters
+     * Fill array given parameters in start game
      *
      * @param arg arguments from file
      */
@@ -324,43 +297,17 @@ public class Game {
      */
     private void checkCurrentCell(int x, int y) {
         int positive = 0;
-
-        if (isAccept(x + 1, y + 1)
-                && (FIELD[x + 1][y + 1] == ALIVE || FIELD[x + 1][y + 1] == INCREASE_DEAD)) {
-            positive++;
-        }
-        if (isAccept(x, y + 1)
-                && (FIELD[x][y + 1] == ALIVE || FIELD[x][y + 1] == INCREASE_DEAD)
-        ) {
-            positive++;
-        }
-        if (isAccept(x + 1, y)
-                && (FIELD[x + 1][y] == ALIVE || FIELD[x + 1][y] == INCREASE_DEAD)
-        ) {
-            positive++;
-        }
-        if (isAccept(x - 1, y + 1)
-                && (FIELD[x - 1][y + 1] == ALIVE || FIELD[x - 1][y + 1] == INCREASE_DEAD)
-        ) {
-            positive++;
-        }
-        if (isAccept(x - 1, y - 1)
-                && (FIELD[x - 1][y - 1] == ALIVE || FIELD[x - 1][y - 1] == INCREASE_DEAD)
-        ) {
-            positive++;
-        }
-        if (isAccept(x + 1, y - 1)
-                && (FIELD[x + 1][y - 1] == ALIVE || FIELD[x + 1][y - 1] == INCREASE_DEAD)
-        ) {
-            positive++;
-        }
-        if (isAccept(x - 1, y)
-                && (FIELD[x - 1][y] == ALIVE || FIELD[x - 1][y] == INCREASE_DEAD)) {
-            positive++;
-        }
-        if (isAccept(x, y - 1)
-                && (FIELD[x][y - 1] == ALIVE || FIELD[x][y - 1] == INCREASE_DEAD)) {
-            positive++;
+        int[] neighbors = {-1, 0, 1};
+        for (int neighbor1 : neighbors) {
+            for (int neighbor2 : neighbors) {
+                if (!(neighbor2 == 0 && neighbor1 == 0) &&
+                        isAccept(x + neighbor1, y + neighbor2)
+                        &&
+                        (FIELD[x + neighbor1][y + neighbor2] == ALIVE || FIELD[x + neighbor1][y + neighbor2] == INCREASE_DEAD)
+                ) {
+                    positive++;
+                }
+            }
         }
 
         if (positive == 3 && FIELD[x][y] == DEAD && isAccept(x, y)) {
@@ -373,8 +320,6 @@ public class Game {
             FIELD[x][y] = INCREASE_DEAD;
             isMoveStepCount.getAndIncrement();
         }
-
-
     }
 
     /**
@@ -385,8 +330,9 @@ public class Game {
      * @return
      */
     private boolean isAccept(int x, int y) {
-        return (x >= 0 && y >= 0 && y < FIELD.length && x < FIELD.length);
+        return (x >= 0 && y >= 0 && y < FIELD.length && x < FIELD.length)
 //                && (FIELD[x][y] == ALIVE || FIELD[x][y] == INCREASE_DEAD)
+                ;
     }
 
 }
