@@ -12,7 +12,7 @@ public class TestMain {
 
         Set<String> fieldsToOutput = new HashSet<String>() {{
             add("age");
-//            add("name");
+            add("name");
         }};
 
         Map<String, String> map = new HashMap<String, String>(){{

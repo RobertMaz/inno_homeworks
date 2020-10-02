@@ -1,8 +1,9 @@
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.stream.Collectors;
 
-public class Reflect implements Cleaner{
+public class Reflect implements Cleaner {
 
     /**
      * Method first save all fields from fieldsToOutput,
@@ -21,6 +22,8 @@ public class Reflect implements Cleaner{
         List<String> values;
         if (object instanceof Map) {
             Map map = (Map) object;
+            checkMap(map, fieldsToCleanup, fieldsToOutput);
+
             values = getValuesString(map, fieldsToOutput);
             cleanFieldsInMap(map, fieldsToCleanup);
             return values;
@@ -31,6 +34,19 @@ public class Reflect implements Cleaner{
         values = getFieldsString(object, fieldsToOutput, fields);
         cleanFields(object, fieldsToCleanup, fields);
         return values;
+    }
+
+    private void checkMap(Map map, Set<String> fieldsToCleanup, Set<String> fieldsToOutput) {
+        for (String s : fieldsToCleanup) {
+            if (!map.containsKey(s)) {
+                throw new IllegalArgumentException("Key not found:" + s);
+            }
+        }
+        for (String name : fieldsToOutput) {
+            if (!map.containsValue(name)) {
+                throw new IllegalArgumentException("Value not found:" + name);
+            }
+        }
     }
 
 
@@ -63,11 +79,7 @@ public class Reflect implements Cleaner{
      */
     private void cleanFieldsInMap(Map map, Set<String> fieldsToCleanup) {
         for (String s : fieldsToCleanup) {
-            if (map.containsKey(s)) {
-                map.remove(s);
-            } else {
-                throw new IllegalArgumentException("Key not found:" + s);
-            }
+            map.remove(s);
         }
     }
 
@@ -79,19 +91,12 @@ public class Reflect implements Cleaner{
      * @return
      */
     private List<String> getValuesString(Map map, Set<String> fieldsToOutput) {
-        List<String> list = new ArrayList<>();
-        for (String name : fieldsToOutput) {
-            if (map.containsValue(name)) {
-                list.add(name);
-            } else {
-                throw new IllegalArgumentException("Value not found:" + name);
-            }
-        }
-        return list;
+        return fieldsToOutput.stream().map(k -> map.get(k).toString()).collect(Collectors.toList());
     }
 
     /**
      * Get all String from user which contains fieldsToOutput.
+     *
      * @param user
      * @param fieldsToOutput
      * @param fields
@@ -128,6 +133,7 @@ public class Reflect implements Cleaner{
 
     /**
      * Clean all fields which contains in fieldsToCleanUp for object.
+     *
      * @param object
      * @param fieldsToCleanup
      * @param fields
