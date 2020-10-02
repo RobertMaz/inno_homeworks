@@ -1,6 +1,7 @@
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Scanner;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.StampedLock;
 
@@ -9,6 +10,10 @@ public class main {
     private final static char DEAD = ' ';
 
     public static void main(String[] args) throws InterruptedException {
+
+        Scanner scanner = new Scanner(System.in);
+        String fileName = scanner.nextLine();
+        int stepCount = scanner.nextInt();
 
         Game game = null;
         try {
