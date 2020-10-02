@@ -3,7 +3,6 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class Game {
     /**
@@ -17,35 +16,48 @@ public class Game {
      */
     private int maxStepCount = Integer.MAX_VALUE;
 
-    GameFiled gameFiled;
+    /**
+     * Game field
+     */
+    private final GameFiledImpl gameFiled;
 
-
+    /**
+     * Default thread count.
+     */
     private int threadCount = 1;
 
-    private int SIZE;
+
+    /**
+     * Step counter for stop game.
+     */
+    private int stepCounter;
+
+    /**
+     * Array size, which read with properties file, and make GameField
+     */
+    private int size;
 
     /**
      * Constructor by default, accept two chars for game.
-     *
-     * @param live
-     * @param dead
+     * Fill the field with dead cells
      */
     public Game(char live, char dead, String fileName) throws IOException {
         if (!fileName.endsWith(".properties")) {
             throw new IllegalArgumentException("File not properties");
         }
         readFileWithProperties(new File(fileName));
-        gameFiled = new GameFiled(live, dead, SIZE);
-        fill(startValues);
+        gameFiled = new GameFiledImpl(live, dead, size);
+
+        for (Integer[] ar : startValues) {
+            gameFiled.setLive(ar[0], ar[1]);
+        }
     }
 
     /**
      * Method check continue game or finish.
-     *
-     * @return
      */
     public boolean isPlay() {
-        return gameFiled.getStepCount() != maxStepCount && gameFiled.getIsMoveStepCount() >= 0;
+        return stepCounter != maxStepCount && gameFiled.getIsMoveStepCount() >= 0;
     }
 
     /**
@@ -57,31 +69,30 @@ public class Game {
      * return current step time.
      */
     public long nextStep() throws InterruptedException {
-
+        stepCounter++;
+        gameFiled.setIsMoveStepCount(-1);
         long beforeTime = System.currentTimeMillis();
 
         ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
         for (int i = 0; i < threadCount; i++) {
             int finalI = i;
             executorService.execute(() -> {
-                gameFiled.oneStep((SIZE / threadCount) * finalI, (SIZE / threadCount) * (finalI + 1));
+                gameFiled.oneStep((size / threadCount) * finalI, (size / threadCount) * (finalI + 1));
             });
         }
 
         executorService.shutdown();
         executorService.awaitTermination(10, TimeUnit.MINUTES);
-
-        long afterTime = System.currentTimeMillis();
-        long currentTime = afterTime - beforeTime;
         fillWithLive();
-        return currentTime;
+
+        return System.currentTimeMillis() - beforeTime;
 
     }
 
     /**
      * Write to file end parameters game.
      *
-     * @param fileName
+     * @param fileName - for write properties
      * @throws FileNotFoundException
      */
     public void writeToFileProperties(String fileName) throws FileNotFoundException {
@@ -93,8 +104,6 @@ public class Game {
 
     /**
      * Set max step count
-     *
-     * @param maxStepCount
      */
     public void setMaxStepCount(int maxStepCount) {
         this.maxStepCount = maxStepCount;
@@ -108,7 +117,7 @@ public class Game {
     private void readFileWithProperties(File file) throws IOException {
         Properties properties = new Properties();
         properties.load(new FileReader(file));
-        SIZE = Integer.parseInt(properties.getProperty("size"));
+        size = Integer.parseInt(properties.getProperty("size"));
         startValues = new ArrayList<>();
         for (int i = 1; i < properties.size() / 2 + 1; i++) {
             int x = Integer.parseInt(properties.getProperty("x" + i));
@@ -119,22 +128,11 @@ public class Game {
     }
 
     /**
-     * Fill array given parameters in start game
-     *
-     * @param arg arguments from file
-     */
-    private void fill(List<Integer[]> arg) {
-        for (Integer[] ar : startValues) {
-            gameFiled.setLive(ar[0], ar[1]);
-        }
-    }
-
-    /**
      * Current step fill all cell which filled INCREASE_LIVE and INCREASE_DEAD
      */
     private void fillWithLive() {
-        for (int i = 0; i < SIZE; i++) {
-            for (int j = 0; j < SIZE; j++) {
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
                 if (gameFiled.isIncreaseLive(i, j)) {
                     gameFiled.setLive(i, j);
                 } else if (gameFiled.isIncreaseDead(i, j)) {
@@ -144,12 +142,18 @@ public class Game {
         }
     }
 
-
+    /**
+     * Output game
+     */
     @Override
     public String toString() {
         return gameFiled.toString();
     }
 
+    /**
+     * Set thread count for multithreading game. If not set, then by default will be one thread.
+     * @param threadCount - for multithreading
+     */
     public void setThreadCount(int threadCount) {
         if (threadCount < 1) {
             throw new IllegalArgumentException("Thread count couldn't lower 1");
@@ -157,13 +161,16 @@ public class Game {
         this.threadCount = threadCount;
     }
 
-
+    /**
+     * Get coordinates all live cells.
+     * @return - properties file with coordinates live cells
+     */
     public Properties getLiveCellsPosition() {
         Properties properties = new Properties();
         int x = 1;
         int y = 1;
-        for (int i = 0; i < SIZE; i++) {
-            for (int j = 0; j < SIZE; j++) {
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
                 if (gameFiled.isAlive(i, j)) {
                     properties.setProperty("x" + x++, String.valueOf(i));
                     properties.setProperty("y" + y++, String.valueOf(j));
